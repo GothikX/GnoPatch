@@ -65,7 +65,7 @@ namespace GnoPatch.Tests
 
             var patcher = new Patcher();
 
-            var result = patcher.Apply(patches, Environment.CurrentDirectory);
+            var result = patcher.Apply(patches, new[] { Environment.CurrentDirectory });
 
             // verify the patched copy performs differently; probably use standard output 
 

@@ -11,7 +11,7 @@ namespace GnoPatch
 {
     class Program
     {
-
+        
         static void Main(string[] args)
         {
             //SaveFile();
@@ -76,7 +76,52 @@ namespace GnoPatch
                 Target = "Gnomoria.exe",
                 Patches = new[]
                 {
-                    _patch
+                    new Patch()
+                    {
+                        Name = "Fix crash when deconstructing steam engine",
+                        Info =
+                            "Base class already nulls mSFX, this removes the extra call that generates a nullref exception.",
+                        MinVersion = "1.0.0.0",
+                        MaxVersion = "1.0.0.0",
+                        Operations = new[]
+                        {
+                            new PatchOperation()
+                            {
+                                TypeName = "Game.SteamEngine",
+                                Method = "OnDelete",
+                                Offset = new OffsetDef(6, 3),
+                                Matches = new[]
+                                {
+                                    new InstructionDef()
+                                    {
+                                        OpCode = Code.Ldarg_0,
+                                        OperandType = "type",
+                                        OperandTargetType = "something something",
+                                        OperandFullName = "msfx something",
+                                        HasConstant = false,
+                                        OperandConstant = null
+                                    },
+                                    new InstructionDef()
+                                    {
+                                        OpCode = Code.Ldfld,
+                                        OperandType = "type",
+                                        OperandTargetType = "something something",
+                                        OperandFullName = "msfx something",
+                                        HasConstant = false,
+                                        OperandConstant = null
+                                    }
+                                },
+                                Replacements = new[]
+                                {
+                                    new InstructionDef()
+                                    {
+                                        OpCode = Code.Nop,
+
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             };
 

@@ -36,7 +36,9 @@ namespace GnoPatch
                 throw new Exception($"Can't find the specified file {patches.Target}; run this from the target folder.");
             }
 
-            resolver.AddSearchDirectory(Path.GetDirectoryName(target));
+            resolver.AddSearchDirectory(target);
+
+            target = Path.Combine(target, patches.Target);
 
             var assembly = AssemblyDefinition.ReadAssembly(target, new ReaderParameters() { AssemblyResolver = resolver });
 

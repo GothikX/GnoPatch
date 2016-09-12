@@ -99,6 +99,7 @@ namespace GnoPatch
 
             if (result.Success)
             {
+                Console.WriteLine($"File '{result.FinalAssembly}' written to disk.");
                 Console.WriteLine("Done! Press any key to exit.");
             }
             else

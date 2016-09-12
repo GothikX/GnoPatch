@@ -64,6 +64,7 @@ namespace GnoPatch
 
             // var patches = Patches.Load("patches.json");
 
+            // this is the default patch we'll apply for the steam engine patch.
             var patches = new PatchGroup()
             {
                 Target = "Gnomoria.exe",
@@ -89,8 +90,8 @@ namespace GnoPatch
                 }
                 
             };
-
             
+            // I'll get rid of this hardcoded path soon
             var path = "c:\\program files (x86)\\steam\\steamapps\\common\\gnomoria";
             
             var patcher = new Patcher();

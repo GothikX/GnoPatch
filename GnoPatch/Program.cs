@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -65,7 +66,7 @@ namespace GnoPatch
 
             var patches = new PatchGroup()
             {
-                Target = "Gnomoria - copy.exe",
+                Target = "Gnomoria.exe",
                 Description = "this should patch the steam engine deconstruction crash",
                 Patches = new[]
                 {
@@ -94,7 +95,20 @@ namespace GnoPatch
             
             var patcher = new Patcher();
             
-            patcher.Apply(patches, path);
+            var result = patcher.Apply(patches, new[] { path, Environment.CurrentDirectory });
+
+            if (result.Success)
+            {
+                Console.WriteLine("Done! Press any key to exit.");
+            }
+            else
+            {
+                Console.WriteLine("Patching failed. Details:");
+                result.Details.ForEach(d => Console.WriteLine(d.Message));
+                Console.WriteLine("Press any key to exit.");
+            }
+
+            Console.Read();
         }
 
         

@@ -24,16 +24,19 @@ namespace GnoPatch
         {
         }
 
-        public PatchProcessResult Apply(PatchGroup patches, string targetDirectory)
+        public PatchProcessResult Apply(PatchGroup patches, IEnumerable<string> targetDirectories)
         {
             var resolver = new DefaultAssemblyResolver();
-            resolver.AddSearchDirectory(targetDirectory);
+            var searchLocations = targetDirectories.ToList();
 
-            var target = Path.Combine(targetDirectory, patches.Target);
-            if (!File.Exists(target))
+            var target = searchLocations.FirstOrDefault(d => File.Exists(Path.Combine(d, patches.Target)));
+
+            if (string.IsNullOrEmpty(target))
             {
-                throw new Exception("Can't find the specified file " + patches.Target);
+                throw new Exception($"Can't find the specified file {patches.Target}; run this from the target folder.");
             }
+
+            resolver.AddSearchDirectory(Path.GetDirectoryName(target));
 
             var assembly = AssemblyDefinition.ReadAssembly(target, new ReaderParameters() { AssemblyResolver = resolver });
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -54,6 +55,9 @@ namespace GnoPatch.Tests
         [TestMethod]
         public void TestMethod1()
         {
+
+            // todo: refactor the ceremony into a harness to develop the tests faster
+
             var patches = Targets.Get("Write", 0, 3, new[]
             {
                 new InstructionDef(Code.Nop), 
@@ -61,7 +65,15 @@ namespace GnoPatch.Tests
 
             var patcher = new Patcher();
 
-            patcher.Apply(patches, Environment.CurrentDirectory);
+            var result = patcher.Apply(patches, Environment.CurrentDirectory);
+
+            // verify the patched copy performs differently; probably use standard output 
+
+            var process = Process.Start(new ProcessStartInfo(result.FinalAssembly)
+            {
+                WindowStyle = ProcessWindowStyle.Minimized,
+                UseShellExecute = true,
+            });
         }
     }
 }

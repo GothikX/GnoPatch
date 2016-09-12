@@ -73,6 +73,7 @@
     <Compile Include="Patches.cs" />
     <Compile Include="PatchGroup.cs" />
     <Compile Include="PatchOperation.cs" />
+    <Compile Include="PatchProcessResult.cs" />
     <Compile Include="PatchResult.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

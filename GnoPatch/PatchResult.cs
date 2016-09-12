@@ -5,14 +5,16 @@ namespace GnoPatch
         public bool Success { get; set; }
         public string Message { get; set; }
 
-        public static PatchResult Fail(string message)
+        public PatchOperation Source { get; set; }
+
+        public static PatchResult Fail(PatchOperation source, string message)
         {
-            return new PatchResult() {Success = false, Message = message};
+            return new PatchResult() {Success = false, Message = message, Source = source};
         }
 
-        public static PatchResult Done(string message = "")
+        public static PatchResult Done(PatchOperation source, string message = "")
         {
-            return new PatchResult() {Success = true, Message = message};
+            return new PatchResult() {Success = true, Message = message, Source = source};
         }
     }
 }

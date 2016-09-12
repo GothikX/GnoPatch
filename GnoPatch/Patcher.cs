@@ -7,7 +7,10 @@ using Mono.Cecil.Cil;
 
 namespace GnoPatch
 {
-    
+    /// <summary>
+    /// Performs the actual patching process, based on patch definitions
+    /// in a PatchGroup.
+    /// </summary>
     public class Patcher
     {
 
@@ -21,7 +24,7 @@ namespace GnoPatch
         {
         }
 
-        public void Apply(PatchGroup patches, string targetDirectory)
+        public PatchProcessResult Apply(PatchGroup patches, string targetDirectory)
         {
             var resolver = new DefaultAssemblyResolver();
             resolver.AddSearchDirectory(targetDirectory);
@@ -34,7 +37,7 @@ namespace GnoPatch
 
             var assembly = AssemblyDefinition.ReadAssembly(target, new ReaderParameters() { AssemblyResolver = resolver });
 
-            var results = new List<Tuple<PatchOperation, PatchResult>>();
+            var results = new List<PatchResult>();
 
             foreach (var patch in patches.Patches)
             {
@@ -43,7 +46,7 @@ namespace GnoPatch
                 foreach (var operation in patch.Operations)
                 {
                     var result = Apply(operation, assembly);
-                    results.Add(Tuple.Create(operation, result));
+                    results.Add(result);
                 }
             }
 
@@ -51,6 +54,12 @@ namespace GnoPatch
 
             assembly.Write(Path.Combine(Path.GetDirectoryName(target), outFile));
 
+            return new PatchProcessResult()
+            {
+                FinalAssembly = outFile,
+                Success = results.All(r => r.Success),
+                Details = results
+            };
         }
 
         private static PatchResult Apply(PatchOperation operation, AssemblyDefinition target)
@@ -58,10 +67,10 @@ namespace GnoPatch
             var module = target.MainModule;
 
             var type = module.Types.FirstOrDefault(t => t.FullName == operation.TypeName);
-            if (type == null) return PatchResult.Fail("Could not find the target type to patch.");
+            if (type == null) return PatchResult.Fail(operation, "Could not find the target type to patch.");
 
             var method = type.Methods.FirstOrDefault(m => m.Name == operation.Method);
-            if (method == null) return PatchResult.Fail("Could not find the target method to patch.");
+            if (method == null) return PatchResult.Fail(operation, "Could not find the target method to patch.");
 
             var il = method.Body.GetILProcessor();
 
@@ -70,21 +79,21 @@ namespace GnoPatch
                 if (DisallowUnsafeActions && operation.Matches.Any())
                 {
                     return
-                        PatchResult.Fail(
+                        PatchResult.Fail(operation,
                             "Both offset and matches were specified. Since using an offset is potentially dangerous, this patch was skipped.");
                 }
-                return ApplyOffset(operation.Offset, operation.Replacements, il);
+                return ApplyOffset(operation, il);
             }
             else
             {
                 var offset = FindMatches(operation, il);
 
-                if (offset.Offset < 0) return PatchResult.Fail("Could not find the matching instructions to patch.");
+                if (offset.Offset < 0) return PatchResult.Fail(operation, "Could not find the matching instructions to patch.");
 
-                return ApplyOffset(offset, operation.Replacements, il);
+                operation.Offset = offset;
+
+                return ApplyOffset(operation, il);
             }
-
-            return PatchResult.Done();
         }
 
         private static OffsetDef FindMatches(PatchOperation operation, ILProcessor il)
@@ -118,27 +127,27 @@ namespace GnoPatch
             return OffsetDef.Invalid;
         }
 
-        private static PatchResult ApplyOffset(OffsetDef offset, IEnumerable<InstructionDef> replacements, ILProcessor il)
+        private static PatchResult ApplyOffset(PatchOperation operation, ILProcessor il)
         {
             var instructions = il.Body.Instructions;
-            var start = instructions.FirstOrDefault(i => i.Offset == offset.Offset);
-            if (start == null) return PatchResult.Fail("Couldn't find the specified offset.");
+            var start = instructions.FirstOrDefault(i => i.Offset == operation.Offset.Offset);
+            if (start == null) return PatchResult.Fail(operation, "Couldn't find the specified offset.");
 
             var indexOf = instructions.IndexOf(start);
-            if (indexOf + offset.Count > instructions.Count)
-                return PatchResult.Fail("Specified offset would be out of bounds of the current method.");
+            if (indexOf + operation.Offset.Count > instructions.Count)
+                return PatchResult.Fail(operation, "Specified offset would be out of bounds of the current method.");
 
-            var toRemove = instructions.Skip(indexOf).Take(offset.Count).ToList();
+            var toRemove = instructions.Skip(indexOf).Take(operation.Offset.Count).ToList();
             
             toRemove.ForEach(il.Remove);
 
-            var replace = replacements as InstructionDef[] ?? replacements.ToArray();
+            var replace = operation.Replacements as InstructionDef[] ?? operation.Replacements.ToArray();
             for (var j = 0; j < replace.Length; j++)
             {
                 il.Body.Instructions.Insert(indexOf + j, GetInstruction(il, replace[j]));
             }
 
-            return PatchResult.Done();
+            return PatchResult.Done(operation);
         }
 
         private static Instruction GetInstruction(ILProcessor il, InstructionDef i)

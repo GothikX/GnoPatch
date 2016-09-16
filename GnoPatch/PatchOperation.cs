@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace GnoPatch
 {
+
     public class PatchOperation
     {
         /// <summary>
@@ -16,6 +19,13 @@ namespace GnoPatch
         public string Method { get; set; }
 
         /// <summary>
+        /// For now we will replace the target method's variables entirely.
+        /// Even if we somehow manage to insert a variable in the middle of the collection with our changes,
+        /// chances are this will mess up more than a few other things, I suspect.
+        /// </summary>
+        public IEnumerable<VariableDef> Variables { get; set; }
+
+        /// <summary>
         /// Unconditional patching; when this is specified, matches won't be matched,
         /// instead we'll go to this offset directly and modify whatever is there.
         /// </summary>
@@ -25,7 +35,7 @@ namespace GnoPatch
         /// If these are specified, we'll search the target method for instructions
         /// that match these exactly, in sequence, and replace the matches.
         /// </summary>
-        public IEnumerable<InstructionDef> Matches { get; set; }
+        public IEnumerable<SerializableInstructionDef> Matches { get; set; }
 
         /// <summary>
         /// The initial goal was to read these from a file, but this may be impossible;

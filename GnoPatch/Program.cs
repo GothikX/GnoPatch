@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace GnoPatch
 {
@@ -22,11 +25,12 @@ namespace GnoPatch
             var patches = new PatchGroup()
             {
                 Target = "Gnomoria.exe",
-                Description = "this should patch the steam engine deconstruction crash",
+                Description = "This is the default set of patches.",
                 Patches = new[]
                 {
                     new Patch()
                     {
+                        Name = "Steam engine crash fix",
                         Operations = new[]
                         {
                             new PatchOperation()
@@ -34,15 +38,83 @@ namespace GnoPatch
                                 TypeName = "Game.SteamEngine",
                                 Method = "OnDelete",
                                 Offset = new OffsetDef(6, 3),
+                                //Replacements = new[]
+                                //{
+                                //    new InstructionDef(Code.Nop),
+                                //}
+                            },
+                        }
+                    },
+                    new Patch()
+                    {
+                        Name = "Linux/Max song name crash fix (hopefully)",
+                        Operations = new[]
+                        {
+                            new PatchOperation()
+                            {
+                                TypeName = "Game.AudioManager",
+                                Method = "c06da358a87ed5391e142d594fd5cfd5c",
+                                Variables = new[]
+                                {
+                                    new VariableDef(typeof(string)),
+                                    new VariableDef(typeof(string)),
+                                    new VariableDef(typeof(string)),
+                                    new VariableDef(typeof(IEnumerator<string>)),
+                                    new VariableDef(typeof(string)),
+                                    new VariableDef(typeof(string)),
+                                },
+                                Offset = new OffsetDef(0, 20), // yes, we're replacing the entire method
                                 Replacements = new[]
                                 {
-                                    new InstructionDef(Code.Nop), 
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldstr, "Content/Audio/Music/")),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldarg_0)),
+                                    new InstructionDef(m =>
+                                            Instruction.Create(OpCodes.Call,
+                                                m.DeclaringType.Methods.First(
+                                                    t => t.Name == "ca26f4a689fb8af2e6971169f0c7efdba"))
+                                        // folder path based on selected music type
+                                    ),
+                                    new InstructionDef(m =>
+                                        Instruction.Create(OpCodes.Call,
+                                            m.Module.Import(Utils.GetMethod(typeof(string), Method.Static,
+                                                "Concat", Type.EmptyTypes,
+                                                new[] {typeof(string), typeof(string)})))),
+                                    new InstructionDef(Instruction.Create(OpCodes.Stloc_0)),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldarg_0)),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldarg_1)),
+                                    new InstructionDef(
+                                        m =>
+                                            Instruction.Create(OpCodes.Call,
+                                                m.Module.Import(Utils.GetMethod(m.DeclaringType, Method.Instance,
+                                                    "c2b2be5a7423f8c79e8429c239980f044",
+                                                    Type.EmptyTypes, new[] {typeof(string)})))),
+                                    new InstructionDef(Instruction.Create(OpCodes.Stloc_1)),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldloc_0)),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldloc_1)),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldstr, ".ogg")),
+                                    new InstructionDef(m =>
+                                        Instruction.Create(OpCodes.Call,
+                                            m.Module.Import(Utils.GetMethod(typeof(string), Method.Static,
+                                                "Concat", Type.EmptyTypes,
+                                                new[] {typeof(string), typeof(string)})))),
+                                    new InstructionDef(Instruction.Create(OpCodes.Stloc_2)),
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldloc_2)),
+                                    new InstructionDef(
+                                        m =>
+                                            Instruction.Create(OpCodes.Call,
+                                                m.Module.Import(Utils.GetMethod(typeof(System.IO.File), Method.Static,
+                                                    "Exists", Type.EmptyTypes, new[] {typeof(string)})))),
+                                    new InstructionDef(Instruction.Create(OpCodes.Brfalse_S, Instruction.Create(OpCodes.Nop))) { SelfOffset = 19 }, // points to another instruction in this list; the nop is just a placeholder
+                                    new InstructionDef(Instruction.Create(OpCodes.Ldloc_2)), 
+                                    new InstructionDef(Instruction.Create(OpCodes.Ret)), 
+                                    new InstructionDef(m => Instruction.Create(OpCodes.Stloc_S, m.Body.Variables[4])), 
+
                                 }
-                            }, 
+                            },
                         }
-                    }, 
+                    },
                 }
-                
+
             };
             
             // I'll get rid of this hardcoded path soon
@@ -68,64 +140,5 @@ namespace GnoPatch
         }
 
         
-        static void SaveFile()
-        {
-            var tests = new PatchGroup()
-            {
-                Description = "blah",
-                Target = "Gnomoria.exe",
-                Patches = new[]
-                {
-                    new Patch()
-                    {
-                        Name = "Fix crash when deconstructing steam engine",
-                        Info =
-                            "Base class already nulls mSFX, this removes the extra call that generates a nullref exception.",
-                        MinVersion = "1.0.0.0",
-                        MaxVersion = "1.0.0.0",
-                        Operations = new[]
-                        {
-                            new PatchOperation()
-                            {
-                                TypeName = "Game.SteamEngine",
-                                Method = "OnDelete",
-                                Offset = new OffsetDef(6, 3),
-                                Matches = new[]
-                                {
-                                    new InstructionDef()
-                                    {
-                                        OpCode = Code.Ldarg_0,
-                                        OperandType = "type",
-                                        OperandTargetType = "something something",
-                                        OperandFullName = "msfx something",
-                                        HasConstant = false,
-                                        OperandConstant = null
-                                    },
-                                    new InstructionDef()
-                                    {
-                                        OpCode = Code.Ldfld,
-                                        OperandType = "type",
-                                        OperandTargetType = "something something",
-                                        OperandFullName = "msfx something",
-                                        HasConstant = false,
-                                        OperandConstant = null
-                                    }
-                                },
-                                Replacements = new[]
-                                {
-                                    new InstructionDef()
-                                    {
-                                        OpCode = Code.Nop,
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-
-            Patches.Save(tests);
-        }
     }
 }

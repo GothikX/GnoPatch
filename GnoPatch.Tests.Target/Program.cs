@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GnoPatch.Tests.Interfaces;
 
 namespace GnoPatch.Tests.Target
 {
@@ -14,22 +15,19 @@ namespace GnoPatch.Tests.Target
     {
         static void Main(string[] args)
         {
-            var instance = new Simple();
-
-            instance.Write();
         }
     }
 
-    public class Simple
+    public class Actor1 : IActor
     {
-        public void Write()
+        public object Act()
         {
-            Console.WriteLine("default message");
+            return ActInternal();
         }
 
-        public void Write(string message)
+        private object ActInternal()
         {
-            Console.WriteLine(message);
+            return 1;
         }
     }
 

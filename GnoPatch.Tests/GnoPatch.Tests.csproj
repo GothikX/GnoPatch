@@ -52,6 +52,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -66,10 +67,16 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="BaseFixture.cs" />
+    <Compile Include="Targets.cs" />
+    <Compile Include="BasicTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GnoPatch.Tests.Interfaces\GnoPatch.Tests.Interfaces.csproj">
+      <Project>{C5B744B9-5F7F-40AF-B526-3BF5049ED15C}</Project>
+      <Name>GnoPatch.Tests.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GnoPatch.Tests.Target\GnoPatch.Tests.Target.csproj">
       <Project>{d3127565-95d6-4e02-b044-397a1a9a6693}</Project>
       <Name>GnoPatch.Tests.Target</Name>
@@ -80,6 +87,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Choose>

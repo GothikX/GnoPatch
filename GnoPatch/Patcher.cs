@@ -87,7 +87,7 @@ namespace GnoPatch
                         PatchResult.Fail(operation,
                             "Both offset and matches were specified. Since using an offset is potentially dangerous, this patch was skipped.");
                 }
-                return ApplyOffset(operation, il);
+                return ApplyOffset(operation, method);
             }
             else
             {
@@ -97,7 +97,7 @@ namespace GnoPatch
 
                 operation.Offset = offset;
 
-                return ApplyOffset(operation, il);
+                return ApplyOffset(operation, method);
             }
         }
 
@@ -132,37 +132,50 @@ namespace GnoPatch
             return OffsetDef.Invalid;
         }
 
-        private static PatchResult ApplyOffset(PatchOperation operation, ILProcessor il)
+        private static PatchResult ApplyOffset(PatchOperation operation, MethodDefinition md)
         {
+            // replace all the variables in the function
+            md.Body.Variables.Clear();
+
+            (operation.Variables ?? new VariableDef[] {}).ToList()
+                .ForEach(v => md.Body.Variables.Add(new VariableDefinition(md.Module.Import(v.Type))));
+
+            var il = md.Body.GetILProcessor();
+
             var instructions = il.Body.Instructions;
             var start = instructions.FirstOrDefault(i => i.Offset == operation.Offset.Offset);
             if (start == null) return PatchResult.Fail(operation, "Couldn't find the specified offset.");
 
+            // find the things we want to remove
             var indexOf = instructions.IndexOf(start);
-            if (indexOf + operation.Offset.Count > instructions.Count)
-                return PatchResult.Fail(operation, "Specified offset would be out of bounds of the current method.");
+
+            // on second though, we want to easily specify we want to replace the entire method, using something like [0, int.MaxValue]
+            //if (indexOf + operation.Offset.Count > instructions.Count)
+            //    return PatchResult.Fail(operation, "Specified offset would be out of bounds of the current method.");
 
             var toRemove = instructions.Skip(indexOf).Take(operation.Offset.Count).ToList();
             
+            // remove the things
             toRemove.ForEach(il.Remove);
 
+            // insert replacements
             var replace = operation.Replacements as InstructionDef[] ?? operation.Replacements.ToArray();
             for (var j = 0; j < replace.Length; j++)
             {
-                il.Body.Instructions.Insert(indexOf + j, GetInstruction(il, replace[j]));
+                il.Body.Instructions.Insert(indexOf + j, replace[j].GetInstruction(md));
+            }
+
+            // walk the instructions again and fix offsets
+            for (var k = 0; k < replace.Length; k++)
+            {
+                if (replace[k].SelfOffset.HasValue)
+                {
+                    il.Body.Instructions[indexOf + k].Operand = il.Body.Instructions[replace[k].SelfOffset.Value];
+                }
             }
 
             return PatchResult.Done(operation);
         }
-
-        private static Instruction GetInstruction(ILProcessor il, InstructionDef i)
-        {
-            if (i.ActualInstruction != null) return i.ActualInstruction;
-
-            if (i.OpCode == Code.Nop) return il.Create(OpCodes.Nop);
-
-            throw new NotImplementedException("The specified instruction can't be created yet.");
-        }
-
+        
     }
 }

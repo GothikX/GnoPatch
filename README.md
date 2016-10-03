@@ -5,5 +5,3 @@
 Community patcher for Gnomoria - http://gnomoria.com
 
 Right now this patcher will only fix a crash that occurs when deconstructing a steam engine. More will come as I reproduce issues and come up with fixes.
-
-Note: unit tests aren't ready to run yet.

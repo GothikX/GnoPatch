@@ -39,5 +39,24 @@ namespace GnoPatch.Tests
 
             return group;
         }
+
+        public static PatchGroup Get(string type, string method, IEnumerable<MatchDef> matches,
+            IEnumerable<VariableDef> vars, IEnumerable<InstructionDef> replacements)
+        {
+            var group = GetGroup();
+            group.Patches.First().Operations = new[]
+            {
+                new PatchOperation()
+                {
+                    TypeName = type,
+                    Method = method,
+                    Variables = vars,
+                    Matches = matches,
+                    Replacements = replacements
+                },
+            };
+
+            return group;
+        }
     }
 }

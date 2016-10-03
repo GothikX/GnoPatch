@@ -11,14 +11,24 @@ namespace GnoPatch
     static class Utils
     {
 
-        internal static bool Match(SerializableInstructionDef def, Instruction i)
-        {
-            if (i.Operand.GetType().Name != def.OperandType) return false;
-            // if (OperandTargetType != null && )
+        //internal static bool Match(SerializableInstructionDef def, Instruction i)
+        //{
+        //    if (i.OpCode.Code != def.OpCode) return false;
 
-            return true;
-        }
+        //    if (i.Operand == null)
+        //    {
+        //        return string.IsNullOrEmpty(def.OperandType);
+        //    }
 
+        //    if (i.Operand.GetType().Name != def.OperandType) return false;
+
+        //    throw new NotImplementedException();
+            
+        //    // if (OperandTargetType != null && )
+
+        //    return true;
+        //}
+        
         internal static Type GetOperandType(this Instruction i)
         {
             switch (i.OpCode.OperandType)

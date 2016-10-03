@@ -33,7 +33,7 @@ namespace GnoPatch
 
             if (string.IsNullOrEmpty(target))
             {
-                throw new Exception($"Can't find the specified file {patches.Target}; run this from the target folder.");
+                throw new FileNotFoundException($"Can't find the specified file {patches.Target}; run this from the target folder.");
             }
 
             resolver.AddSearchDirectory(target);
@@ -44,7 +44,7 @@ namespace GnoPatch
 
             var results = new List<PatchResult>();
 
-            foreach (var patch in patches.Patches)
+            foreach (var patch in patches.Patches.Where(p => p.Apply))
             {
                 // todo: validate versions
 
@@ -112,12 +112,12 @@ namespace GnoPatch
 
             foreach (var instruction in list)
             {
-                if (Utils.Match(matches[matchIndex], instruction))
+                if (matches[matchIndex].Match(instruction, il))
                 {
                     if (matchIndex == 0) matchOffset = instruction.Offset;
 
                     matchIndex++;
-                    if (matchIndex == matches.Count - 1)
+                    if (matchIndex == matches.Count)
                     {
                         return new OffsetDef(matchOffset, matches.Count);
                     }
@@ -134,11 +134,15 @@ namespace GnoPatch
 
         private static PatchResult ApplyOffset(PatchOperation operation, MethodDefinition md)
         {
-            // replace all the variables in the function
-            md.Body.Variables.Clear();
 
-            (operation.Variables ?? new VariableDef[] {}).ToList()
-                .ForEach(v => md.Body.Variables.Add(new VariableDefinition(md.Module.Import(v.Type))));
+            if (operation.Variables != null)
+            {
+                // replace all the variables in the function until we find a better way (if ever needed)
+                md.Body.Variables.Clear();
+
+                (operation.Variables ?? new VariableDef[] {}).ToList()
+                    .ForEach(v => md.Body.Variables.Add(new VariableDefinition(md.Module.Import(v.Type))));
+            }
 
             var il = md.Body.GetILProcessor();
 
@@ -150,6 +154,7 @@ namespace GnoPatch
             var indexOf = instructions.IndexOf(start);
 
             // on second though, we want to easily specify we want to replace the entire method, using something like [0, int.MaxValue]
+            // so no need to verify the bounds I guess
             //if (indexOf + operation.Offset.Count > instructions.Count)
             //    return PatchResult.Fail(operation, "Specified offset would be out of bounds of the current method.");
 
@@ -158,7 +163,7 @@ namespace GnoPatch
             // remove the things
             toRemove.ForEach(il.Remove);
 
-            // insert replacements
+            // insert the things
             var replace = operation.Replacements as InstructionDef[] ?? operation.Replacements.ToArray();
             for (var j = 0; j < replace.Length; j++)
             {

@@ -17,11 +17,6 @@ namespace GnoPatch
         
         static void Main(string[] args)
         {
-            //SaveFile();
-
-            // var patches = Patches.Load("patches.json");
-
-            // this is the default patch we'll apply for the steam engine patch.
             var patches = new PatchGroup()
             {
                 Target = "Gnomoria.exe",
@@ -31,6 +26,7 @@ namespace GnoPatch
                     new Patch()
                     {
                         Name = "Steam engine crash fix",
+                        Info = "Removes a few instructions from the OnDelete method of SteamEngine, which cause a nullref exception by attempting to access the mSFX field after it's been nulled by the base class.",
                         Operations = new[]
                         {
                             new PatchOperation()
@@ -38,16 +34,12 @@ namespace GnoPatch
                                 TypeName = "Game.SteamEngine",
                                 Method = "OnDelete",
                                 Offset = new OffsetDef(6, 3),
-                                //Replacements = new[]
-                                //{
-                                //    new InstructionDef(Code.Nop),
-                                //}
                             },
                         }
                     },
                     new Patch()
                     {
-                        Name = "Linux/Max song name crash fix (hopefully)",
+                        Name = "Linux/Mac song name crash fix (hopefully) (work in progress)",
                         Operations = new[]
                         {
                             new PatchOperation()

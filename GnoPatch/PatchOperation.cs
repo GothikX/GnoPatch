@@ -4,7 +4,6 @@ using Mono.Cecil.Cil;
 
 namespace GnoPatch
 {
-
     public class PatchOperation
     {
         /// <summary>
@@ -17,6 +16,11 @@ namespace GnoPatch
         /// overloads, but for now just the simple name works, and we select the first matching method.
         /// </summary>
         public string Method { get; set; }
+
+        /// <summary>
+        /// The type of operation to perform.
+        /// </summary>
+        public OperationType OperationType { get; set; }
 
         /// <summary>
         /// For now we will replace the target method's variables entirely.
@@ -35,7 +39,7 @@ namespace GnoPatch
         /// If these are specified, we'll search the target method for instructions
         /// that match these exactly, in sequence, and replace the matches.
         /// </summary>
-        public IEnumerable<SerializableInstructionDef> Matches { get; set; }
+        public IEnumerable<MatchDef> Matches { get; set; }
 
         /// <summary>
         /// The initial goal was to read these from a file, but this may be impossible;

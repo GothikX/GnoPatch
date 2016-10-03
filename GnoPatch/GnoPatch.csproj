@@ -67,7 +67,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InstructionDef.cs" />
+    <Compile Include="LiteralMatchDef.cs" />
+    <Compile Include="MatchDef.cs" />
     <Compile Include="OffsetDef.cs" />
+    <Compile Include="OperationType.cs" />
     <Compile Include="Patch.cs" />
     <Compile Include="Patcher.cs" />
     <Compile Include="Patches.cs" />

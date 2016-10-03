@@ -34,6 +34,7 @@ namespace GnoPatch
         /// <summary>
         /// Offset to an instruction in the same method code.
         /// If this is specified, the instruction's operand is set to the n-th instruction in the list.
+        /// This can make things difficult if applying more than one operation to the same method, but I'll cross that bridge when I have to
         /// </summary>
         public int? SelfOffset { get; set; }
 
@@ -51,35 +52,48 @@ namespace GnoPatch
         public Func<MethodDefinition, Instruction> InstructionFactory { get; set; }
     }
 
-    public class SerializableInstructionDef : InstructionDef
-    {
-        public SerializableInstructionDef()
-        {
-        }
+    // this may have been a useless attempt after all
+    //public class SerializableInstructionDef : InstructionDef
+    //{
+    //    public SerializableInstructionDef()
+    //    {
+    //    }
 
-        public SerializableInstructionDef(Code opCode)
-        {
-            OpCode = opCode;
-        }
+    //    public SerializableInstructionDef(Code opCode, string operandType, string constant) : this(opCode, operandType, null, null)
+    //    {
+    //        OperandConstant = constant;
+    //    }
 
-        [DefaultValue(-1)]
-        public Code OpCode { get; set; }
+    //    public SerializableInstructionDef(Code opCode, string operandType) : this(opCode, operandType, null, null)
+    //    {
+    //    }
 
-        public string OperandType { get; set; }
-        public string OperandTargetType { get; set; }
-        public string OperandFullName { get; set; }
-        public bool HasConstant { get; set; }
-        public string OperandConstant { get; set; }
+    //    public SerializableInstructionDef(Code opCode, string operandType, string operandTargetType, string operandFullName)
+    //    {
+    //        OpCode = opCode;
+    //        OperandType = operandType;
+    //        OperandTargetType = operandTargetType;
+    //        OperandFullName = operandFullName;
+    //    }
 
-        // this is all still highly experimental...
-        // in the case of switches, we match this against the array; the offset we will replace will be the offset of the matched child
-        // in the case of all others instructions with an instruction operand, we match this against the operand; we won't change the offset in this case
-        public InstructionDef ChildInstruction { get; set; }
+    //    [DefaultValue(-1)]
+    //    public Code OpCode { get; set; }
 
-        public override Instruction GetInstruction(MethodDefinition md)
-        {
-            // this is actually much more trouble than it's worth
-            throw new NotImplementedException();
-        }
-    }
+    //    public string OperandType { get; set; }
+    //    public string OperandTargetType { get; set; }
+    //    public string OperandFullName { get; set; }
+    //    public bool HasConstant { get; set; }
+    //    public string OperandConstant { get; set; }
+
+    //    // this is all still highly experimental...
+    //    // in the case of switches, we match this against the array; the offset we will replace will be the offset of the matched child
+    //    // in the case of all others instructions with an instruction operand, we match this against the operand; we won't change the offset in this case
+    //    public InstructionDef ChildInstruction { get; set; }
+
+    //    public override Instruction GetInstruction(MethodDefinition md)
+    //    {
+    //        // this is actually much more trouble than it's worth
+    //        throw new NotImplementedException();
+    //    }
+    //}
 }
